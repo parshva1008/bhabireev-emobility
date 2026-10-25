@@ -1,0 +1,7 @@
+For Netlify, create a file named `public/_redirects` containing:
+ /* /index.html 200
+
+For Vercel, add `vercel.json` with:
+ {
+   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+ }
