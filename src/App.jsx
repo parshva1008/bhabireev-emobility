@@ -4,7 +4,7 @@ import { ArrowRight, BatteryCharging, Bike, CheckCircle2, ChevronDown, CircleHel
 import { isConfigured, requireSupabase, supabase } from './lib/supabase'
 
 const money = n => new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(Number(n||0))
-const fallback = 'https://m.economictimes.com/industry/renewables/ev-penetration-in-domestic-two-wheeler-market-can-rise-to-40-pc-by-fy31-ather-energy/articleshow/123611513.cms';
+const fallback = 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=1200&q=80';
 const demoCards = [
  {id:'sample1',brand:'Ather',model:'450X',year:2023,price:85000,odometer_km:8500,battery_capacity:'3.7 kWh',claimed_range_km:100,colour:'Grey',condition:'Excellent',status:'available',vehicle_type:'scooter',image_urls:[fallback],description:'Example layout only. Replace this sample with an actual, inspected vehicle.'},
  {id:'sample2',brand:'Ola',model:'S1 Pro',year:2022,price:72000,odometer_km:12000,battery_capacity:'3.9 kWh',claimed_range_km:120,colour:'Blue',condition:'Good',status:'available',vehicle_type:'scooter',image_urls:[fallback],description:'Example layout only. Replace this sample with an actual, inspected vehicle.'},
