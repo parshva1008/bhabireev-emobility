@@ -1,12 +1,10 @@
-
 import React, { useEffect, useState } from 'react'
 import { Link, NavLink, Route, Routes, useNavigate, useLocation } from 'react-router-dom'
 import { ArrowRight, BatteryCharging, Bike, CheckCircle2, ChevronDown, CircleHelp, ClipboardList, Gauge, Heart, LayoutDashboard, LogOut, Menu, MessageSquare, Search, Settings, ShieldCheck, SlidersHorizontal, Sparkles, Upload, Users, X, Zap } from 'lucide-react'
 import { isConfigured, requireSupabase, supabase } from './lib/supabase'
-import WhatsAppButton from "./WhatsAppButton";
 
 const money = n => new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(Number(n||0))
-const fallback = 'https://asset.inc42.com/2024/04/EV-2W-registrations.png';
+const fallback = 'https://m.economictimes.com/industry/renewables/ev-penetration-in-domestic-two-wheeler-market-can-rise-to-40-pc-by-fy31-ather-energy/articleshow/123611513.cms';
 const demoCards = [
  {id:'sample1',brand:'Ather',model:'450X',year:2023,price:85000,odometer_km:8500,battery_capacity:'3.7 kWh',claimed_range_km:100,colour:'Grey',condition:'Excellent',status:'available',vehicle_type:'scooter',image_urls:[fallback],description:'Example layout only. Replace this sample with an actual, inspected vehicle.'},
  {id:'sample2',brand:'Ola',model:'S1 Pro',year:2022,price:72000,odometer_km:12000,battery_capacity:'3.9 kWh',claimed_range_km:120,colour:'Blue',condition:'Good',status:'available',vehicle_type:'scooter',image_urls:[fallback],description:'Example layout only. Replace this sample with an actual, inspected vehicle.'},
@@ -25,8 +23,8 @@ function VehicleCard({v,onEnquire}) { const [saved,setSaved]=useState(false); co
 function EnquiryDialog({vehicle,settings,onClose}) {
  const [form,setForm]=useState({name:'',phone:'',email:'',preferred_colour:vehicle?.colour||'',message:''}),[busy,setBusy]=useState(false),[note,setNote]=useState('')
  useEffect(()=>{setForm(f=>({...f,preferred_colour:vehicle?.colour||''}));setNote('')},[vehicle])
- async function submit(e){e.preventDefault();setBusy(true);setNote('');try{const db=requireSupabase();const {error}=await db.from('enquiries').insert({customer_name:form.name.trim(),phone:form.phone.trim(),email:form.email.trim()||null,vehicle_id:vehicle?.id?.startsWith('sample')?null:(vehicle?.id||null),vehicle_label:vehicle?`${vehicle.brand} ${vehicle.model}`:'General enquiry',preferred_colour:form.preferred_colour||null,message:form.message.trim()||null});if(error)throw error;setNote('Thank you. Your enquiry has been received.');setForm({name:'',phone:'',email:'',preferred_colour:'',message:''})}catch(err){setNote(err.message||'Enquiry could not be sent. Please try again later.')}finally{setBusy(false)}}
- return <div className="dialog-backdrop" onMouseDown={e=>e.target===e.currentTarget&&onClose()}><section className="dialog"><div className="dialog-head"><div><span className="eyebrow">Let's talk</span><h2>Enquire about {vehicle?`${vehicle.brand} ${vehicle.model}`:'an electric ride'}</h2></div><button className="icon-button" onClick={onClose} aria-label="Close"><X/></button></div>{!isConfigured&&<div className="inline-alert">Online enquiries are disabled until you connect Supabase. Follow the setup guide to enable secure online submissions.</div>}{note&&<div className="inline-alert">{note}</div>}<form className="form-grid" onSubmit={submit}><label>Your name *<input required maxLength="100" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/></label><label>Mobile number *<input required minLength="10" maxLength="16" pattern="[0-9 +()-]{10,16}" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></label><label>Email (optional)<input type="email" maxLength="254" value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/></label><label>Preferred colour<input maxLength="60" value={form.preferred_colour} onChange={e=>setForm({...form,preferred_colour:e.target.value})}/></label><label className="span-2">Message<textarea rows="4" maxLength="2000" placeholder="Ask about battery health, documents, inspection, or a viewing…" value={form.message} onChange={e=>setForm({...form,message:e.target.value})}/></label><div className="span-2"><button className="button button-green full" disabled={busy||!isConfigured}>{busy?'Sending…':'Send enquiry securely'} <ArrowRight size={16}/></button><p className="form-note">Please avoid sending identity documents or payment details through this form.</p></div></form></section></div>
+ async function submit(e){e.preventDefault();setBusy(true);setNote('');try{const db=requireSupabase();const {error}=await db.from('enquiries').insert({customer_name:form.name.trim(),phone:form.phone.trim(),email:form.email.trim()||null,vehicle_id:vehicle?.id?.startsWith('sample')?null:(vehicle?.id||null),vehicle_label:vehicle?`${vehicle.brand} ${vehicle.model}`:'General enquiry',preferred_colour:form.preferred_colour||null,message:form.message.trim()||null});if(error)throw error;setNote(settings?.enquiry_success_message||'Thank you. Your enquiry has been received.');setForm({name:'',phone:'',email:'',preferred_colour:'',message:''})}catch(err){setNote(err.message||'Enquiry could not be sent. Please try again later.')}finally{setBusy(false)}}
+ return <div className="dialog-backdrop" onMouseDown={e=>e.target===e.currentTarget&&onClose()}><section className="dialog"><div className="dialog-head"><div><span className="eyebrow">{settings?.enquiry_eyebrow||"Let's talk"}</span><h2>{vehicle?.brand||vehicle?.model?`${settings?.enquiry_title||'Enquire about'} ${vehicle.brand} ${vehicle.model}`:`${settings?.enquiry_title||'Enquire about'} an electric ride`}</h2></div><button className="icon-button" onClick={onClose} aria-label="Close"><X/></button></div>{!isConfigured&&<div className="inline-alert">Online enquiries are disabled until you connect Supabase. Follow the setup guide to enable secure online submissions.</div>}{note&&<div className="inline-alert">{note}</div>}<form className="form-grid" onSubmit={submit}><label>{settings?.enquiry_name_label||'Your name'} *<input required maxLength="100" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/></label><label>{settings?.enquiry_phone_label||'Mobile number'} *<input required minLength="10" maxLength="16" pattern="[0-9 +()-]{10,16}" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></label><label>{settings?.enquiry_email_label||'Email (optional)'}<input type="email" maxLength="254" value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/></label><label>{settings?.enquiry_colour_label||'Preferred colour'}<input maxLength="60" value={form.preferred_colour} onChange={e=>setForm({...form,preferred_colour:e.target.value})}/></label><label className="span-2">{settings?.enquiry_message_label||'Message'}<textarea rows="4" maxLength="2000" placeholder={settings?.enquiry_message_placeholder||'Ask about battery health, documents, inspection, or a viewing…'} value={form.message} onChange={e=>setForm({...form,message:e.target.value})}/></label><div className="span-2"><button className="button button-green full" disabled={busy||!isConfigured}>{busy?'Sending…':(settings?.enquiry_submit_text||'Send enquiry securely')} <ArrowRight size={16}/></button><p className="form-note">Please avoid sending identity documents or payment details through this form.</p></div></form></section></div>
 }
 function Home({settings}) {
  const [vehicles,setVehicles]=useState([]),[loading,setLoading]=useState(true),[q,setQ]=useState(''),[kind,setKind]=useState('all'),[budget,setBudget]=useState('all'),[enquire,setEnquire]=useState(null),[error,setError]=useState('')
@@ -36,7 +34,7 @@ function Home({settings}) {
  <section className="trust-strip"><div className="container trust-items"><span><BatteryCharging/> EV details that matter</span><span><ShieldCheck/> Transparency first</span><span><Heart/> Personal buying support</span><span><Bike/> Two-wheelers only</span></div></section>
  <section className="section container" id="inventory"><div className="section-heading"><div><span className="eyebrow">The collection</span><h2>Find your kind of electric.</h2><p>Browse available listings and compare the essentials before you enquire.</p></div><span className="listing-count">{loading?'Loading…':`${shown.length} available ${shown.length===1?'ride':'rides'}`}</span></div><div className="filter-bar"><div className="search-field"><Search size={18}/><input placeholder="Search brand or model" value={q} onChange={e=>setQ(e.target.value)}/></div><select aria-label="Vehicle type" value={kind} onChange={e=>setKind(e.target.value)}><option value="all">All two-wheelers</option><option value="scooter">Electric scooters</option><option value="bike">Electric bikes</option></select><select aria-label="Budget" value={budget} onChange={e=>setBudget(e.target.value)}><option value="all">Any budget</option><option value="50000">Up to ₹50,000</option><option value="75000">Up to ₹75,000</option><option value="100000">Up to ₹1,00,000</option><option value="150000">Up to ₹1,50,000</option></select><span className="filter-icon"><SlidersHorizontal size={17}/> Refine</span></div>{!isConfigured&&<div className="inline-alert">Preview mode: these example listings are illustrative. Connect Supabase and add real inventory in the owner dashboard before publishing.</div>}{error&&<div className="inline-alert">{error}</div>}{loading?<div className="loading-grid"><div/><div/><div/></div>:shown.length?<div className="vehicle-grid">{shown.map(v=><VehicleCard key={v.id} v={v} onEnquire={setEnquire}/>)}</div>:<div className="empty-state"><Bike size={30}/><h3>No matching rides just yet</h3><p>Try changing your search or budget.</p></div>}</section>
  <section className="why-section" id="why"><div className="container"><div className="section-heading"><div><span className="eyebrow">A more considered way to buy</span><h2>Good decisions start<br/>with better information.</h2></div><p className="why-intro">Used EVs deserve more than a price tag. We make space for the practical details buyers need to ask informed questions.</p></div><div className="benefit-grid"><article><div className="benefit-icon"><BatteryCharging/></div><h3>Battery-first thinking</h3><p>Battery capacity and claimed range are clearly shown when supplied. A battery health claim should only be made when supported by a real test or report.</p></article><article><div className="benefit-icon"><ClipboardList/></div><h3>Condition in context</h3><p>Vehicle descriptions can disclose service history, charger availability, visible damage, and known defects without hiding the details.</p></article><article><div className="benefit-icon"><ShieldCheck/></div><h3>Clear buyer communication</h3><p>Ask about a listing directly. Confirm documents, ownership, battery condition, and vehicle status before any payment.</p></article></div></div></section>
- <section className="contact-band container" id="contact"><div className="contact-copy"><span className="eyebrow">Personal EV buying support</span><h2>Find your next electric ride.</h2><p>Questions about battery health, condition or a test ride? Talk directly to Bhabireev E-Mobility.</p><div className="contact-details"><a href={`tel:${settings?.contact_phone||'9607799171'}`}><span>CALL US</span><b>{settings?.contact_phone||'9607799171'}</b></a><a href={`https://wa.me/91${(settings?.whatsapp_number||'9607121117').replace(/\D/g,'').replace(/^91/,'')}`} target="_blank" rel="noreferrer"><span>WHATSAPP</span><b>{settings?.whatsapp_number||'9607121117'}</b></a><a href={`mailto:${settings?.contact_email||'bhabireparshva5@gmail.com'}`}><span>EMAIL</span><b>{settings?.contact_email||'bhabireparshva5@gmail.com'}</b></a></div></div><button className="button button-cream contact-cta" onClick={()=>setEnquire({brand:'',model:'',id:null,colour:''})}>Send an enquiry <ArrowRight size={17}/></button></section></main><Footer settings={settings}/>{enquire&&<EnquiryDialog vehicle={enquire} settings={settings} onClose={()=>setEnquire(null)}/>}</>
+ <section className="contact-band container" id="contact"><div className="contact-copy"><span className="eyebrow">{settings?.contact_eyebrow||'Personal EV buying support'}</span><h2>{settings?.contact_title||'Find your next electric ride.'}</h2><p>{settings?.contact_description||'Questions about battery health, condition or a test ride? Talk directly to Bhabireev E-Mobility.'}</p><div className="contact-details"><a href={`tel:${settings?.contact_phone||'9607799171'}`}><span>{settings?.contact_phone_label||'CALL US'}</span><b>{settings?.contact_phone||'9607799171'}</b></a><a href={`https://wa.me/91${(settings?.whatsapp_number||'9607121117').replace(/\D/g,'').replace(/^91/,'')}`} target="_blank" rel="noreferrer"><span>{settings?.contact_whatsapp_label||'WHATSAPP'}</span><b>{settings?.whatsapp_number||'9607121117'}</b></a><a href={`mailto:${settings?.contact_email||'bhabireparshva5@gmail.com'}`}><span>{settings?.contact_email_label||'EMAIL'}</span><b>{settings?.contact_email||'bhabireparshva5@gmail.com'}</b></a></div></div><button className="button button-cream contact-cta" onClick={()=>setEnquire({brand:'',model:'',id:null,colour:''})}>{settings?.contact_cta_text||'Send an enquiry'} <ArrowRight size={17}/></button></section></main><Footer settings={settings}/>{enquire&&<EnquiryDialog vehicle={enquire} settings={settings} onClose={()=>setEnquire(null)}/>}</>
 }
 function Auth({onSession}) {
  const [email,setEmail]=useState(''),[password,setPassword]=useState(''),[busy,setBusy]=useState(false),[message,setMessage]=useState('')
@@ -75,152 +73,18 @@ function VehicleEditor({vehicle,onClose,onSave}) {
  async function submit(e){e.preventDefault();setBusy(true);setError('');try{const db=requireSupabase();const image_urls=await uploadPhotos(db);await onSave({...data,year:Number(data.year),price:Number(data.price),odometer_km:Number(data.odometer_km||0),claimed_range_km:Number(data.claimed_range_km||0),image_urls})}catch(err){setError(err.message||'Could not save vehicle.')}finally{setBusy(false)}}
  return <div className="dialog-backdrop" onMouseDown={e=>e.target===e.currentTarget&&onClose()}><section className="dialog wide-dialog"><div className="dialog-head"><div><span className="eyebrow">INVENTORY MANAGEMENT</span><h2>{vehicle?'Edit vehicle listing':'Add a vehicle listing'}</h2></div><button className="icon-button" onClick={onClose}><X/></button></div>{error&&<div className="inline-alert">{error}</div>}<form className="form-grid editor-form" onSubmit={submit}><label>Brand *<input required maxLength="80" value={data.brand} onChange={e=>update('brand',e.target.value)}/></label><label>Model *<input required maxLength="100" value={data.model} onChange={e=>update('model',e.target.value)}/></label><label>Vehicle type<select value={data.vehicle_type} onChange={e=>update('vehicle_type',e.target.value)}><option value="scooter">Electric scooter</option><option value="bike">Electric bike</option></select></label><label>Year *<input type="number" required min="2000" max={new Date().getFullYear()+1} value={data.year} onChange={e=>update('year',e.target.value)}/></label><label>Asking price (₹) *<input type="number" required min="0" max="10000000" value={data.price} onChange={e=>update('price',e.target.value)}/></label><label>Kilometres travelled<input type="number" min="0" max="2000000" value={data.odometer_km} onChange={e=>update('odometer_km',e.target.value)}/></label><label>Battery capacity<input maxLength="60" placeholder="e.g. 3.7 kWh" value={data.battery_capacity||''} onChange={e=>update('battery_capacity',e.target.value)}/></label><label>Claimed range (km)<input type="number" min="0" max="2000" value={data.claimed_range_km} onChange={e=>update('claimed_range_km',e.target.value)}/></label><label>Colour<input maxLength="60" value={data.colour||''} onChange={e=>update('colour',e.target.value)}/></label><label>Condition<select value={data.condition||'Good'} onChange={e=>update('condition',e.target.value)}>{['Excellent','Good','Fair','Needs inspection'].map(x=><option key={x}>{x}</option>)}</select></label><label>Battery health<select value={data.battery_health_status||'Not tested'} onChange={e=>update('battery_health_status',e.target.value)}>{['Not tested','Tested','Report available'].map(x=><option key={x}>{x}</option>)}</select></label><label>Listing status<select value={data.status||'available'} onChange={e=>update('status',e.target.value)}><option value="available">Available</option><option value="reserved">Reserved</option><option value="sold">Sold</option></select></label><label className="span-2">Vehicle photos<input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={e=>{const selected=[...e.target.files];if(selected.some(f=>f.size>5*1024*1024)){setError('Each photo must be 5 MB or smaller.');e.target.value='';return}if(selected.length+(data.image_urls||[]).length>8){setError('Maximum 8 photos per listing.');e.target.value='';return}setFiles(selected);setError('')}}/><small>JPG, PNG or WebP · up to 5 MB each · maximum 8 photos per listing. Uploaded files use the public vehicle photo bucket.</small><div className="photo-strip">{(data.image_urls||[]).map((url,i)=><div key={url} className="photo-thumb"><img src={url} alt="Vehicle"/><button type="button" onClick={()=>update('image_urls',data.image_urls.filter((_,j)=>i!==j))}>×</button></div>)}{files.map((f,i)=><div key={f.name+i} className="photo-thumb"><img src={URL.createObjectURL(f)} alt={f.name}/><span>New</span></div>)}</div></label><label className="span-2">Description / known defects<textarea rows="4" maxLength="5000" value={data.description||''} onChange={e=>update('description',e.target.value)} placeholder="Service history, charger included, known damage, inspection details…"/></label><label className="checkbox-label span-2"><input type="checkbox" checked={Boolean(data.published)} onChange={e=>update('published',e.target.checked)}/> Publish this listing on the customer website</label><div className="span-2 form-end"><button type="button" className="button button-light" onClick={onClose}>Cancel</button><button type="submit" className="button button-green" disabled={busy}>{busy?'Saving…':'Save listing'} <ArrowRight size={16}/></button></div></form></section></div>
 }
-function SettingsPage({settings,onSave}){const [data,setData]=useState({business_name:settings.business_name||'Bhabireev E-Mobility',tagline:settings.tagline||'Premium pre-owned electric two-wheelers.',contact_email:settings.contact_email||'bhabireparshva5@gmail.com',contact_phone:settings.contact_phone||'9607799171',whatsapp_number:settings.whatsapp_number||'9607121117',location:settings.location||'Sangli, Maharashtra, India',hero_title:settings.hero_title||'Your next ride. Electrified.',hero_description:settings.hero_description||'Discover thoughtfully selected pre-owned electric scooters and bikes.',accent_colour:settings.accent_colour||'#B38B55'}),[busy,setBusy]=useState(false);function set(k,v){setData(d=>({...d,[k]:v}))}async function submit(e){e.preventDefault();setBusy(true);await onSave(data);setBusy(false)}return <><div className="page-title-row"><div><span className="eyebrow">MAKE IT YOURS</span><h1>Website settings</h1><p>Customise the business information displayed on your website.</p></div></div><section className="admin-panel settings-panel"><div className="panel-heading"><div><h2>Business identity</h2><p>Brand and contact details</p></div><Settings size={20}/></div><form className="form-grid" onSubmit={submit}><label>Business name<input required maxLength="100" value={data.business_name} onChange={e=>set('business_name',e.target.value)}/></label><label>Tagline<input maxLength="180" value={data.tagline} onChange={e=>set('tagline',e.target.value)}/></label><label>Contact email<input type="email" maxLength="254" value={data.contact_email} onChange={e=>set('contact_email',e.target.value)}/></label><label>Contact phone<input maxLength="20" value={data.contact_phone} onChange={e=>set('contact_phone',e.target.value)}/></label><label>WhatsApp number<input maxLength="20" value={data.whatsapp_number} onChange={e=>set('whatsapp_number',e.target.value)}/></label><label>Business location<input maxLength="180" value={data.location} onChange={e=>set('location',e.target.value)}/></label><label className="span-2">Homepage headline<input maxLength="180" value={data.hero_title} onChange={e=>set('hero_title',e.target.value)}/></label><label className="span-2">Homepage description<textarea rows="3" maxLength="600" value={data.hero_description} onChange={e=>set('hero_description',e.target.value)}/></label><label>Brand accent colour<div className="colour-input"><input type="color" value={data.accent_colour} onChange={e=>set('accent_colour',e.target.value)}/><code>{data.accent_colour}</code></div></label><div className="span-2 form-end"><button className="button button-green" disabled={busy}>{busy?'Saving…':'Save website settings'} <ArrowRight size={16}/></button></div></form></section><div className="inline-alert settings-note"><ShieldCheck size={17}/> Settings are stored in your connected database. To prevent unauthorised changes, database policies restrict updates to the owner account.</div></>}
-
-export default function App() {
-  const [session, setSession] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
-
-  const [settings, setSettings] = useState({
-    business_name: 'Bhabireev E-Mobility',
-    tagline: 'Premium pre-owned electric two-wheelers.',
-    contact_email: 'bhabireparshva5@gmail.com',
-    contact_phone: '9607799171',
-    whatsapp_number: '9607121117',
-    location: 'Sangli, Maharashtra, India',
-    hero_title: 'Electric. Elevated. Yours.',
-    hero_description:
-      'Discover carefully selected pre-owned electric scooters and bikes, with the details you need to choose your next ride confidently.',
-  });
-
-  const loc = useLocation();
-
-  useEffect(() => {
-    if (!isConfigured) {
-      setAuthLoading(false);
-      return;
-    }
-
-    supabase.auth.getSession().then(({ data, error }) => {
-      if (error) {
-        console.error('Could not retrieve session:', error.message);
-      }
-
-      setSession(data?.session ?? null);
-      setAuthLoading(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-      setAuthLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (!isConfigured) return;
-
-    let alive = true;
-
-    async function loadSettings() {
-      try {
-        const { data, error } = await supabase
-          .from('site_settings')
-          .select('*')
-          .eq('id', 1)
-          .maybeSingle();
-
-        if (error) throw error;
-
-        if (alive && data) {
-          setSettings((previous) => ({
-            ...previous,
-            ...data,
-          }));
-        }
-      } catch (error) {
-        console.error('Could not load website settings:', error.message);
-      }
-    }
-
-    loadSettings();
-
-    return () => {
-      alive = false;
-    };
-  }, [loc.pathname]);
-
-  if (loc.pathname.startsWith('/owner') && authLoading) {
-    return (
-      <div className="full-loader">
-        Preparing secure owner access…
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <Routes>
-        <Route
-          path="/"
-          element={<Home settings={settings} />}
-        />
-
-        <Route
-          path="/owner/login"
-          element={
-            session ? (
-              <NavigateToDashboard />
-            ) : (
-              <Auth onSession={setSession} />
-            )
-          }
-        />
-
-        <Route
-          path="/owner/*"
-          element={
-            session ? (
-              <AdminLayout
-                session={session}
-                onLogout={() => setSession(null)}
-              />
-            ) : (
-              <Auth onSession={setSession} />
-            )
-          }
-        />
-
-        <Route
-          path="*"
-          element={<Home settings={settings} />}
-        />
-      </Routes>
-
-      {!loc.pathname.startsWith('/owner') && (
-        <WhatsAppButton />
-      )}
-    </>
-  );
-}
-
-function NavigateToDashboard() {
-  return <RedirectDashboard />;
-}
-
-function RedirectDashboard() {
-  const nav = useNavigate();
-
-  useEffect(() => {
-    nav('/owner/dashboard', { replace: true });
-  }, [nav]);
-
-  return (
-    <div className="full-loader">
-      Opening owner workspace…
-    </div>
-  );
-}
+function SettingsPage({settings,onSave}){const [data,setData]=useState({business_name:settings.business_name||'Bhabireev E-Mobility',tagline:settings.tagline||'Premium pre-owned electric two-wheelers.',contact_email:settings.contact_email||'bhabireparshva5@gmail.com',contact_phone:settings.contact_phone||'9607799171',whatsapp_number:settings.whatsapp_number||'9607121117',location:settings.location||'Sangli, Maharashtra, India',hero_title:settings.hero_title||'Your next ride. Electrified.',hero_description:settings.hero_description||'Discover thoughtfully selected pre-owned electric scooters and bikes.',accent_colour:settings.accent_colour||'#B38B55',background_colour:settings.background_colour||'#F5F2EC',surface_colour:settings.surface_colour||'#FFFEFC',dark_colour:settings.dark_colour||'#171A24',text_colour:settings.text_colour||'#20232D',contact_eyebrow:settings.contact_eyebrow||'Personal EV buying support',contact_title:settings.contact_title||'Find your next electric ride.',contact_description:settings.contact_description||'Questions about battery health, condition or a test ride? Talk directly to Bhabireev E-Mobility.',contact_cta_text:settings.contact_cta_text||'Send an enquiry',contact_phone_label:settings.contact_phone_label||'CALL US',contact_whatsapp_label:settings.contact_whatsapp_label||'WHATSAPP',contact_email_label:settings.contact_email_label||'EMAIL',enquiry_eyebrow:settings.enquiry_eyebrow||"Let's talk",enquiry_title:settings.enquiry_title||'Enquire about',enquiry_name_label:settings.enquiry_name_label||'Your name',enquiry_phone_label:settings.enquiry_phone_label||'Mobile number',enquiry_email_label:settings.enquiry_email_label||'Email (optional)',enquiry_colour_label:settings.enquiry_colour_label||'Preferred colour',enquiry_message_label:settings.enquiry_message_label||'Message',enquiry_message_placeholder:settings.enquiry_message_placeholder||'Ask about battery health, documents, inspection, or a viewing…',enquiry_submit_text:settings.enquiry_submit_text||'Send enquiry securely',enquiry_success_message:settings.enquiry_success_message||'Thank you. Your enquiry has been received.'}),[busy,setBusy]=useState(false);useEffect(()=>{setData(current=>({...current,...settings,accent_colour:settings.accent_colour||current.accent_colour||'#B38B55',background_colour:settings.background_colour||current.background_colour||'#F5F2EC',surface_colour:settings.surface_colour||current.surface_colour||'#FFFEFC',dark_colour:settings.dark_colour||current.dark_colour||'#171A24',text_colour:settings.text_colour||current.text_colour||'#20232D'}))},[settings]);function set(k,v){setData(d=>({...d,[k]:v}))}async function submit(e){e.preventDefault();setBusy(true);await onSave(data);setBusy(false)}return <><div className="page-title-row"><div><span className="eyebrow">MAKE IT YOURS</span><h1>Website settings</h1><p>Customise the business information displayed on your website.</p></div></div><section className="admin-panel settings-panel"><div className="panel-heading"><div><h2>Business identity</h2><p>Brand and contact details</p></div><Settings size={20}/></div><form className="form-grid" onSubmit={submit}><label>Business name<input required maxLength="100" value={data.business_name} onChange={e=>set('business_name',e.target.value)}/></label><label>Tagline<input maxLength="180" value={data.tagline} onChange={e=>set('tagline',e.target.value)}/></label><label>Contact email<input type="email" maxLength="254" value={data.contact_email} onChange={e=>set('contact_email',e.target.value)}/></label><label>Contact phone<input maxLength="20" value={data.contact_phone} onChange={e=>set('contact_phone',e.target.value)}/></label><label>WhatsApp number<input maxLength="20" value={data.whatsapp_number} onChange={e=>set('whatsapp_number',e.target.value)}/></label><label>Business location<input maxLength="180" value={data.location} onChange={e=>set('location',e.target.value)}/></label><label className="span-2">Homepage headline<input maxLength="180" value={data.hero_title} onChange={e=>set('hero_title',e.target.value)}/></label><label className="span-2">Homepage description<textarea rows="3" maxLength="600" value={data.hero_description} onChange={e=>set('hero_description',e.target.value)}/></label><div className="span-2 theme-editor"><h3>Contact section content</h3><p>Edit the Contact Us section and the labels shown for your phone, WhatsApp and email.</p><div className="form-grid"><label>Small heading<input maxLength="100" value={data.contact_eyebrow} onChange={e=>set('contact_eyebrow',e.target.value)}/></label><label>Contact section title<input maxLength="180" value={data.contact_title} onChange={e=>set('contact_title',e.target.value)}/></label><label className="span-2">Contact description<textarea rows="3" maxLength="600" value={data.contact_description} onChange={e=>set('contact_description',e.target.value)}/></label><label>Enquiry button text<input maxLength="80" value={data.contact_cta_text} onChange={e=>set('contact_cta_text',e.target.value)}/></label><label>Phone label<input maxLength="40" value={data.contact_phone_label} onChange={e=>set('contact_phone_label',e.target.value)}/></label><label>WhatsApp label<input maxLength="40" value={data.contact_whatsapp_label} onChange={e=>set('contact_whatsapp_label',e.target.value)}/></label><label>Email label<input maxLength="40" value={data.contact_email_label} onChange={e=>set('contact_email_label',e.target.value)}/></label></div></div><div className="span-2 theme-editor"><h3>Enquiry form content</h3><p>Change the enquiry popup heading, field labels, message hint, submit button and confirmation message.</p><div className="form-grid"><label>Small heading<input maxLength="100" value={data.enquiry_eyebrow} onChange={e=>set('enquiry_eyebrow',e.target.value)}/></label><label>Form title<input maxLength="180" value={data.enquiry_title} onChange={e=>set('enquiry_title',e.target.value)}/></label><label>Name field label<input maxLength="80" value={data.enquiry_name_label} onChange={e=>set('enquiry_name_label',e.target.value)}/></label><label>Phone field label<input maxLength="80" value={data.enquiry_phone_label} onChange={e=>set('enquiry_phone_label',e.target.value)}/></label><label>Email field label<input maxLength="80" value={data.enquiry_email_label} onChange={e=>set('enquiry_email_label',e.target.value)}/></label><label>Colour field label<input maxLength="80" value={data.enquiry_colour_label} onChange={e=>set('enquiry_colour_label',e.target.value)}/></label><label>Message field label<input maxLength="80" value={data.enquiry_message_label} onChange={e=>set('enquiry_message_label',e.target.value)}/></label><label>Submit button text<input maxLength="80" value={data.enquiry_submit_text} onChange={e=>set('enquiry_submit_text',e.target.value)}/></label><label className="span-2">Message placeholder<textarea rows="2" maxLength="300" value={data.enquiry_message_placeholder} onChange={e=>set('enquiry_message_placeholder',e.target.value)}/></label><label className="span-2">Success message<textarea rows="2" maxLength="300" value={data.enquiry_success_message} onChange={e=>set('enquiry_success_message',e.target.value)}/></label></div></div><div className="span-2 theme-editor"><h3>Website colours</h3><p>Choose colours for your public website. Changes apply after saving and refreshing.</p><div className="theme-colour-grid"><label>Brand accent<div className="colour-input"><input type="color" value={data.accent_colour} onChange={e=>set('accent_colour',e.target.value)}/><code>{data.accent_colour}</code></div></label><label>Page background<div className="colour-input"><input type="color" value={data.background_colour} onChange={e=>set('background_colour',e.target.value)}/><code>{data.background_colour}</code></div></label><label>Cards and panels<div className="colour-input"><input type="color" value={data.surface_colour} onChange={e=>set('surface_colour',e.target.value)}/><code>{data.surface_colour}</code></div></label><label>Dark sections<div className="colour-input"><input type="color" value={data.dark_colour} onChange={e=>set('dark_colour',e.target.value)}/><code>{data.dark_colour}</code></div></label><label>Main text<div className="colour-input"><input type="color" value={data.text_colour} onChange={e=>set('text_colour',e.target.value)}/><code>{data.text_colour}</code></div></label></div></div><div className="span-2 form-end"><button className="button button-green" disabled={busy}>{busy?'Saving…':'Save website settings'} <ArrowRight size={16}/></button></div></form></section><div className="inline-alert settings-note"><ShieldCheck size={17}/> Settings are stored in your connected database. To prevent unauthorised changes, database policies restrict updates to the owner account.</div></>}
+export default function App(){const [session,setSession]=useState(null),[authLoading,setAuthLoading]=useState(true),[settings,setSettings]=useState({business_name:'Bhabireev E-Mobility',tagline:'Premium pre-owned electric two-wheelers.',contact_email:'bhabireparshva5@gmail.com',contact_phone:'9607799171',whatsapp_number:'9607121117',location:'Sangli, Maharashtra, India',hero_title:'Electric. Elevated. Yours.',hero_description:'Discover carefully selected pre-owned electric scooters and bikes, with the details you need to choose your next ride confidently.',accent_colour:'#B38B55',background_colour:'#F5F2EC',surface_colour:'#FFFEFC',dark_colour:'#171A24',text_colour:'#20232D',contact_eyebrow:'Personal EV buying support',contact_title:'Find your next electric ride.',contact_description:'Questions about battery health, condition or a test ride? Talk directly to Bhabireev E-Mobility.',contact_cta_text:'Send an enquiry',contact_phone_label:'CALL US',contact_whatsapp_label:'WHATSAPP',contact_email_label:'EMAIL',enquiry_eyebrow:"Let's talk",enquiry_title:'Enquire about',enquiry_name_label:'Your name',enquiry_phone_label:'Mobile number',enquiry_email_label:'Email (optional)',enquiry_colour_label:'Preferred colour',enquiry_message_label:'Message',enquiry_message_placeholder:'Ask about battery health, documents, inspection, or a viewing…',enquiry_submit_text:'Send enquiry securely',enquiry_success_message:'Thank you. Your enquiry has been received.'}),loc=useLocation();useEffect(()=>{if(!isConfigured){setAuthLoading(false);return}supabase.auth.getSession().then(({data})=>{setSession(data.session);setAuthLoading(false)});const {data:{subscription}}=supabase.auth.onAuthStateChange((_event,s)=>setSession(s));return()=>subscription.unsubscribe()},[]);useEffect(()=>{if(!isConfigured)return;supabase.from('site_settings').select('*').eq('id',1).maybeSingle().then(({data})=>data&&setSettings(current=>({...current,...data})))},[loc.pathname]);useEffect(()=>{const root=document.documentElement;root.style.setProperty('--site-background',settings.background_colour||'#F5F2EC');root.style.setProperty('--site-surface',settings.surface_colour||'#FFFEFC');root.style.setProperty('--site-dark',settings.dark_colour||'#171A24');root.style.setProperty('--site-text',settings.text_colour||'#20232D');root.style.setProperty('--site-accent',settings.accent_colour||'#B38B55')},[settings]);if(loc.pathname.startsWith('/owner')&&authLoading)return <div className="full-loader">Preparing secure owner access…</div>;return <><style>{`
+:root{--site-background:#F5F2EC;--site-surface:#FFFEFC;--site-dark:#171A24;--site-text:#20232D;--site-accent:#B38B55}
+body{background:var(--site-background);color:var(--site-text)}
+.site-header,.footer,.contact-band{background:var(--site-dark)!important}
+.hero,.section,.why-section{background-color:var(--site-background)}
+.vehicle-card,.admin-panel,.metric-card,.auth-card,.dialog,.settings-panel{background-color:var(--site-surface)}
+.button-green,.brand-symbol{background-color:var(--site-accent)!important;border-color:var(--site-accent)!important}
+.eyebrow,.vehicle-price{color:var(--site-accent)}
+.theme-editor{border:1px solid rgba(23,26,36,.12);border-radius:16px;padding:18px;margin-top:8px;background:var(--site-background)}
+.theme-editor h3{margin:0 0 6px}.theme-editor p{margin:0 0 16px;color:#777;font-size:.9rem}.theme-colour-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.theme-colour-grid label{min-width:0}.colour-input{display:flex;align-items:center;gap:10px;margin-top:8px}.colour-input input[type=color]{width:54px;height:42px;padding:3px;border:1px solid #ddd;border-radius:8px;background:white;cursor:pointer}.colour-input code{font-size:.85rem}
+@media(max-width:640px){.theme-colour-grid{grid-template-columns:1fr}}
+`}</style><Routes><Route path="/" element={<Home settings={settings}/>}/><Route path="/owner/login" element={session?<NavigateToDashboard/>:<Auth onSession={setSession}/>}/><Route path="/owner/*" element={session?<AdminLayout session={session} onLogout={()=>setSession(null)}/>:<Auth onSession={setSession}/>}/><Route path="*" element={<Home settings={settings}/>}/></Routes></>}
+function NavigateToDashboard(){return <RedirectDashboard/>}
+function RedirectDashboard(){const nav=useNavigate();useEffect(()=>nav('/owner/dashboard',{replace:true}),[nav]);return <div className="full-loader">Opening owner workspace…</div>}
