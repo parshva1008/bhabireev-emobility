@@ -19,7 +19,251 @@ function SiteHeader({settings}) {
  <nav className={menu?'site-nav open':'site-nav'}><a href="/#inventory" onClick={()=>setMenu(false)}>Explore EVs</a><a href="/#why" onClick={()=>setMenu(false)}>Why us</a><a href="/#contact" onClick={()=>setMenu(false)}>Contact</a><Link className="button button-dark nav-cta" to="/owner/login">Owner login <ArrowRight size={15}/></Link></nav></header>
 }
 function Footer({settings}) {const phone1=settings?.contact_phone||'9607799171';const phone2=settings?.whatsapp_number||'9607121117';const email=settings?.contact_email||'bhabireparshva5@gmail.com';return <footer className="footer"><div className="footer-main"><Link className="wordmark" to="/"><span className="brand-symbol"><Zap size={22}/></span><span>{settings?.business_name||'Bhabireev'}<small>E-MOBILITY</small></span></Link><p>{settings?.tagline||'Premium pre-owned electric two-wheelers.'}{settings?.location?` · ${settings.location}`:''}</p><div className="footer-links"><a href="/#inventory">Browse vehicles</a><a href={`tel:${phone1}`}>{phone1}</a><a href={`tel:${phone2}`}>{phone2}</a><a href={`mailto:${email}`}>{email}</a><Link to="/owner/login">Owner access</Link></div></div><div className="footer-bottom">© {new Date().getFullYear()} {settings?.business_name||'Bhabireev E-Mobility'}. Vehicle details must be confirmed before purchase.</div></footer>}
-function VehicleCard({v,onEnquire}) { const [saved,setSaved]=useState(false); const img=v.image_urls?.[0]||fallback; return <article className="vehicle-card"><div className="vehicle-image"><img src={img} alt={`${v.brand} ${v.model}`} loading="lazy" onError={e=>e.currentTarget.src=fallback}/><span className="vehicle-chip">{v.condition||'Pre-owned'}</span><button className={'heart '+(saved?'selected':'')} aria-label="Save vehicle" onClick={()=>setSaved(!saved)}><Heart size={17} fill={saved?'currentColor':'none'}/></button></div><div className="vehicle-content"><div className="vehicle-title"><div><h3>{v.brand} {v.model}</h3><p>{v.year} · {v.vehicle_type==='bike'?'Electric bike':'Electric scooter'}</p></div><span className="available-dot">Available</span></div><div className="vehicle-price">{money(v.price)}</div><div className="vehicle-specs"><span><Gauge size={15}/>{Number(v.odometer_km||0).toLocaleString('en-IN')} km</span><span><BatteryCharging size={15}/>{v.battery_capacity||'Battery details N/A'}</span><span><Zap size={15}/>{v.claimed_range_km?`${v.claimed_range_km} km claimed`:'Range not listed'}</span></div><button className="button button-green full" onClick={()=>onEnquire(v)}>Enquire about this EV <ArrowRight size={16}/></button></div></article> }
+
+function VehicleCard({ v, onEnquire }) {
+  const [saved, setSaved] = useState(false)
+  const [activePhoto, setActivePhoto] = useState(0)
+  const [viewerOpen, setViewerOpen] = useState(false)
+
+  const photos = (Array.isArray(v.image_urls) ? v.image_urls : []).filter(
+    url => typeof url === 'string' && url.trim()
+  )
+  const gallery = photos.length ? photos : [fallback]
+  const currentPhoto = gallery[activePhoto] || gallery[0]
+
+  function previousPhoto() {
+    setActivePhoto(i => (i - 1 + gallery.length) % gallery.length)
+  }
+
+  function nextPhoto() {
+    setActivePhoto(i => (i + 1) % gallery.length)
+  }
+
+  useEffect(() => {
+    if (!viewerOpen) return
+
+    const handleKey = e => {
+      if (e.key === 'Escape') setViewerOpen(false)
+      if (e.key === 'ArrowLeft') previousPhoto()
+      if (e.key === 'ArrowRight') nextPhoto()
+    }
+
+    document.addEventListener('keydown', handleKey)
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.removeEventListener('keydown', handleKey)
+      document.body.style.overflow = ''
+    }
+  }, [viewerOpen, gallery.length])
+
+  return (
+    <>
+      <article className="vehicle-card">
+        <div className="vehicle-image vehicle-gallery">
+          <img
+            className="vehicle-main-photo"
+            src={currentPhoto}
+            alt={`${v.brand} ${v.model} - photo ${activePhoto + 1}`}
+            loading="lazy"
+            onError={e => {
+              e.currentTarget.onerror = null
+              e.currentTarget.src = fallback
+            }}
+            onClick={() => setViewerOpen(true)}
+          />
+
+          <span className="vehicle-chip">
+            {v.condition || 'Pre-owned'}
+          </span>
+
+          <button
+            type="button"
+            className={`heart ${saved ? 'selected' : ''}`}
+            aria-label="Save vehicle"
+            onClick={() => setSaved(!saved)}
+          >
+            <Heart size={17} fill={saved ? 'currentColor' : 'none'} />
+          </button>
+
+          {gallery.length > 1 && (
+            <>
+              <button
+                type="button"
+                className="gallery-arrow gallery-prev"
+                aria-label="Previous photo"
+                onClick={previousPhoto}
+              >
+                ‹
+              </button>
+
+              <button
+                type="button"
+                className="gallery-arrow gallery-next"
+                aria-label="Next photo"
+                onClick={nextPhoto}
+              >
+                ›
+              </button>
+            </>
+          )}
+
+          <button
+            type="button"
+            className="gallery-count"
+            onClick={() => setViewerOpen(true)}
+          >
+            {activePhoto + 1} / {gallery.length} · View photos
+          </button>
+        </div>
+
+        {gallery.length > 1 && (
+          <div className="vehicle-thumbnails">
+            {gallery.map((url, index) => (
+              <button
+                type="button"
+                key={`${url}-${index}`}
+                className={`vehicle-thumbnail ${
+                  activePhoto === index ? 'active' : ''
+                }`}
+                onClick={() => setActivePhoto(index)}
+                aria-label={`View photo ${index + 1}`}
+                aria-pressed={activePhoto === index}
+              >
+                <img
+                  src={url}
+                  alt={`Vehicle thumbnail ${index + 1}`}
+                  loading="lazy"
+                />
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="vehicle-content">
+          <div className="vehicle-title">
+            <div>
+              <h3>{v.brand} {v.model}</h3>
+              <p>
+                {v.year} ·{' '}
+                {v.vehicle_type === 'bike'
+                  ? 'Electric bike'
+                  : 'Electric scooter'}
+              </p>
+            </div>
+            <span className="available-dot">Available</span>
+          </div>
+
+          <div className="vehicle-price">{money(v.price)}</div>
+
+          <div className="vehicle-specs">
+            <span>
+              <Gauge size={15} />
+              {Number(v.odometer_km || 0).toLocaleString('en-IN')} km
+            </span>
+            <span>
+              <BatteryCharging size={15} />
+              {v.battery_capacity || 'Battery details N/A'}
+            </span>
+            <span>
+              <Zap size={15} />
+              {v.claimed_range_km
+                ? `${v.claimed_range_km} km claimed`
+                : 'Range not listed'}
+            </span>
+          </div>
+
+          <button
+            className="button button-green full"
+            onClick={() => onEnquire(v)}
+          >
+            Enquire about this EV <ArrowRight size={16} />
+          </button>
+        </div>
+      </article>
+
+      {viewerOpen && (
+        <div
+          className="photo-viewer-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${v.brand} ${v.model} photo gallery`}
+          onMouseDown={e => {
+            if (e.target === e.currentTarget) setViewerOpen(false)
+          }}
+        >
+          <section className="photo-viewer">
+            <header className="photo-viewer-header">
+              <div>
+                <strong>{v.brand} {v.model}</strong>
+                <span>
+                  Photo {activePhoto + 1} of {gallery.length}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                className="photo-viewer-close"
+                onClick={() => setViewerOpen(false)}
+                aria-label="Close gallery"
+              >
+                <X size={24} />
+              </button>
+            </header>
+
+            <div className="photo-viewer-stage">
+              {gallery.length > 1 && (
+                <button
+                  type="button"
+                  className="viewer-arrow"
+                  onClick={previousPhoto}
+                  aria-label="Previous photo"
+                >
+                  ‹
+                </button>
+              )}
+
+              <img
+                src={currentPhoto}
+                alt={`${v.brand} ${v.model} photo ${activePhoto + 1}`}
+                onError={e => {
+                  e.currentTarget.onerror = null
+                  e.currentTarget.src = fallback
+                }}
+              />
+
+              {gallery.length > 1 && (
+                <button
+                  type="button"
+                  className="viewer-arrow"
+                  onClick={nextPhoto}
+                  aria-label="Next photo"
+                >
+                  ›
+                </button>
+              )}
+            </div>
+
+            <div className="photo-viewer-thumbnails">
+              {gallery.map((url, index) => (
+                <button
+                  type="button"
+                  key={`${url}-${index}`}
+                  className={activePhoto === index ? 'active' : ''}
+                  onClick={() => setActivePhoto(index)}
+                  aria-label={`View photo ${index + 1}`}
+                >
+                  <img src={url} alt={`Photo ${index + 1}`} />
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
+    </>
+  )
+}
+
 function EnquiryDialog({vehicle,settings,onClose}) {
  const [form,setForm]=useState({name:'',phone:'',email:'',preferred_colour:vehicle?.colour||'',message:''}),[busy,setBusy]=useState(false),[note,setNote]=useState('')
  useEffect(()=>{setForm(f=>({...f,preferred_colour:vehicle?.colour||''}));setNote('')},[vehicle])
