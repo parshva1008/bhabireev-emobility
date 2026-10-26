@@ -266,3 +266,66 @@
     height: 50px;
   }
 }
+/* Quick contact buttons in customer enquiries */
+.enquiry-contact-number {
+  font-weight: 650;
+  margin-bottom: 8px;
+  white-space: nowrap;
+}
+
+.enquiry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 160px;
+}
+
+.enquiry-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.enquiry-action:hover {
+  transform: translateY(-1px);
+  filter: brightness(0.96);
+}
+
+.call-action {
+  color: #fff;
+  background: #365B45;
+}
+
+.whatsapp-action {
+  color: #fff;
+  background: #25D366;
+}
+
+.enquiry-action svg {
+  flex-shrink: 0;
+}
+.goog-te-banner-frame,
+.goog-te-gadget,
+.goog-te-balloon-frame {
+  display: none !important;
+}
+
+body {
+  top: 0 !important;
+}
+
+.skiptranslate {
+  display: none !important;
+}
+
+.site-nav .button {
+  white-space: nowrap;
+}
