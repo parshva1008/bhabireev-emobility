@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import './chatbot.css'
 import { Link, NavLink, Route, Routes, useNavigate, useLocation } from 'react-router-dom'
 import { ArrowRight, BatteryCharging, Bike, CheckCircle2, ChevronDown, CircleHelp, ClipboardList, Gauge, Heart, LayoutDashboard, LogOut, Menu, MessageSquare, Phone, Send, Search, Settings, ShieldCheck, SlidersHorizontal, Sparkles, Upload, Users, X, Zap } from 'lucide-react'
 import { isConfigured, requireSupabase, supabase } from './lib/supabase'
@@ -11,81 +12,40 @@ const demoCards = [
 ]
 
 function Notice({message,onClose}) { if(!message) return null; return <div className="notice" role="status">{message}<button onClick={onClose} aria-label="Dismiss"><X size={16}/></button></div> }
-
-
 function LanguageButton() {
-  const [language, setLanguage] = useState('en')
+ const [language, setLanguage] = useState('en')
 
-  function toggleLanguage() {
-    const next = language === 'en' ? 'hi' : 'en'
-    const select = document.querySelector('.goog-te-combo')
+ function toggleLanguage() {
+   const next = language === 'en' ? 'hi' : 'en'
+   const select = document.querySelector('.goog-te-combo')
 
-    if (!select) {
-      alert('Translation is loading. Please try again in a moment.')
-      return
-    }
+   if (!select) {
+     alert('Translation is loading. Please try again in a moment.')
+     return
+   }
 
-    select.value = next
-    select.dispatchEvent(new Event('change'))
-    setLanguage(next)
-  }
+   select.value = next
+   select.dispatchEvent(new Event('change'))
+   setLanguage(next)
+ }
 
-  return (
-    <button
-      type="button"
-      className="button button-light"
-      onClick={toggleLanguage}
-    >
-      {language === 'en' ? 'हिंदी में देखें' : 'View in English'}
-    </button>
-  )
+ return (
+   <button
+     type="button"
+     className="button button-light language-button"
+     onClick={toggleLanguage}
+     title="Translate website to Hindi or English"
+   >
+     {language === 'en' ? 'हिंदी में देखें' : 'View in English'}
+   </button>
+ )
 }
 
 function SiteHeader({settings}) {
-  const [menu, setMenu] = useState(false)
-
-  return (
-    <header className="site-header">
-      <Link className="wordmark" to="/">
-        <span className="brand-symbol"><Zap size={22}/></span>
-        <span>
-          {settings?.business_name || 'Bhabireev'}
-          <small>E-MOBILITY</small>
-        </span>
-      </Link>
-
-      <button
-        className="mobile-menu icon-button"
-        onClick={() => setMenu(!menu)}
-        aria-label="Toggle navigation"
-      >
-        {menu ? <X/> : <Menu/>}
-      </button>
-
-      <nav className={menu ? 'site-nav open' : 'site-nav'}>
-        <a href="/#inventory" onClick={() => setMenu(false)}>
-          Explore EVs
-        </a>
-
-        <a href="/#why" onClick={() => setMenu(false)}>
-          Why us
-        </a>
-
-        <a href="/#contact" onClick={() => setMenu(false)}>
-          Contact
-        </a>
-
-        <LanguageButton />
-
-        <Link
-          className="button button-dark nav-cta"
-          to="/owner/login"
-        >
-          Owner login <ArrowRight size={15}/>
-        </Link>
-      </nav>
-    </header>
-  )
+ const [menu,setMenu]=useState(false)
+ return <header className="site-header"><Link className="wordmark" to="/"><span className="brand-symbol"><Zap size={22}/></span><span>{settings?.business_name||'Bhabireev'}<small>E-MOBILITY</small></span></Link>
+ <button className="mobile-menu icon-button" onClick={()=>setMenu(!menu)} aria-label="Toggle navigation">{menu?<X/>:<Menu/>}</button>
+ <nav className={menu?'site-nav open':'site-nav'}><a href="/#inventory" onClick={()=>setMenu(false)}>Explore EVs</a><a href="/#why" onClick={()=>setMenu(false)}>Why us</a><a href="/#contact" onClick={()=>setMenu(false)}>Contact</a><LanguageButton/><Link className="button button-dark nav-cta" to="/owner/login">Owner login <ArrowRight size={15}/></Link></nav></header>
 }
 function Footer({settings}) {const phone1=settings?.contact_phone||'9607799171';const phone2=settings?.whatsapp_number||'9607121117';const email=settings?.contact_email||'bhabireparshva5@gmail.com';return <footer className="footer"><div className="footer-main"><Link className="wordmark" to="/"><span className="brand-symbol"><Zap size={22}/></span><span>{settings?.business_name||'Bhabireev'}<small>E-MOBILITY</small></span></Link><p>{settings?.tagline||'Premium pre-owned electric two-wheelers.'}{settings?.location?` · ${settings.location}`:''}</p><div className="footer-links"><a href="/#inventory">Browse vehicles</a><a href={`tel:${phone1}`}>{phone1}</a><a href={`tel:${phone2}`}>{phone2}</a><a href={`mailto:${email}`}>{email}</a><Link to="/owner/login">Owner access</Link></div></div><div className="footer-bottom">© {new Date().getFullYear()} {settings?.business_name||'Bhabireev E-Mobility'}. Vehicle details must be confirmed before purchase.</div></footer>}
 
@@ -336,9 +296,51 @@ function VehicleCard({ v, onEnquire }) {
 function EnquiryDialog({vehicle,settings,onClose}) {
  const [form,setForm]=useState({name:'',phone:'',email:'',preferred_colour:vehicle?.colour||'',message:''}),[busy,setBusy]=useState(false),[note,setNote]=useState('')
  useEffect(()=>{setForm(f=>({...f,preferred_colour:vehicle?.colour||''}));setNote('')},[vehicle])
- async function submit(e){e.preventDefault();setBusy(true);setNote('');try{const db=requireSupabase();const {error}=await db.from('enquiries').insert({customer_name:form.name.trim(),phone:form.phone.trim(),email:form.email.trim()||null,vehicle_id:vehicle?.id?.startsWith('sample')?null:(vehicle?.id||null),vehicle_label:vehicle?`${vehicle.brand} ${vehicle.model}`:'General enquiry',preferred_colour:form.preferred_colour||null,message:form.message.trim()||null});if(error)throw error;setNote(settings?.enquiry_success_message||'Thank you. Your enquiry has been received.');setForm({name:'',phone:'',email:'',preferred_colour:'',message:''})}catch(err){setNote(err.message||'Enquiry could not be sent. Please try again later.')}finally{setBusy(false)}}
+ async function submit(e){e.preventDefault();setBusy(true);setNote('');try{const db=requireSupabase();const {error}=await db.from('enquiries').insert({customer_name:form.name.trim(),phone:form.phone.trim(),email:form.email.trim()||null,vehicle_id:vehicle?.id?.startsWith('sample')?null:(vehicle?.id||null),vehicle_label:vehicle?`${vehicle.brand} ${vehicle.model}`:'General enquiry',preferred_colour:form.preferred_colour||null,message:form.message.trim()||null});if(error)throw error;window.dispatchEvent(new CustomEvent('bhabireev:enquiry-submitted',{detail:{name:form.name.trim(),phone:form.phone.trim(),vehicle:vehicle?`${vehicle.brand||''} ${vehicle.model||''}`.trim():'General enquiry',message:form.message.trim()}}));setNote(settings?.enquiry_success_message||'Thank you. Your enquiry has been received.');setForm({name:'',phone:'',email:'',preferred_colour:'',message:''})}catch(err){setNote(err.message||'Enquiry could not be sent. Please try again later.')}finally{setBusy(false)}}
  return <div className="dialog-backdrop" onMouseDown={e=>e.target===e.currentTarget&&onClose()}><section className="dialog"><div className="dialog-head"><div><span className="eyebrow">{settings?.enquiry_eyebrow||"Let's talk"}</span><h2>{vehicle?.brand||vehicle?.model?`${settings?.enquiry_title||'Enquire about'} ${vehicle.brand} ${vehicle.model}`:`${settings?.enquiry_title||'Enquire about'} an electric ride`}</h2></div><button className="icon-button" onClick={onClose} aria-label="Close"><X/></button></div>{!isConfigured&&<div className="inline-alert">Online enquiries are disabled until you connect Supabase. Follow the setup guide to enable secure online submissions.</div>}{note&&<div className="inline-alert">{note}</div>}<form className="form-grid" onSubmit={submit}><label>{settings?.enquiry_name_label||'Your name'} *<input required maxLength="100" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/></label><label>{settings?.enquiry_phone_label||'Mobile number'} *<input required minLength="10" maxLength="16" pattern="[0-9 +()-]{10,16}" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></label><label>{settings?.enquiry_email_label||'Email (optional)'}<input type="email" maxLength="254" value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/></label><label>{settings?.enquiry_colour_label||'Preferred colour'}<input maxLength="60" value={form.preferred_colour} onChange={e=>setForm({...form,preferred_colour:e.target.value})}/></label><label className="span-2">{settings?.enquiry_message_label||'Message'}<textarea rows="4" maxLength="2000" placeholder={settings?.enquiry_message_placeholder||'Ask about battery health, documents, inspection, or a viewing…'} value={form.message} onChange={e=>setForm({...form,message:e.target.value})}/></label><div className="span-2"><button className="button button-green full" disabled={busy||!isConfigured}>{busy?'Sending…':(settings?.enquiry_submit_text||'Send enquiry securely')} <ArrowRight size={16}/></button><p className="form-note">Please avoid sending identity documents or payment details through this form.</p></div></form></section></div>
 }
+function EnquiryAssistant({settings, vehicles=[]}) {
+ const welcome = `Hi! I'm the Bhabireev E-Mobility assistant. Ask me about available electric scooters, prices, range, battery details, or bulk orders.`
+ const [messages,setMessages]=useState([{role:'assistant',content:welcome}])
+ const [draft,setDraft]=useState('')
+ const [sending,setSending]=useState(false)
+ const [open,setOpen]=useState(false)
+ const [lead,setLead]=useState(null)
+ const [error,setError]=useState('')
+ useEffect(()=>{
+  const onEnquiry=(event)=>{
+   const detail=event.detail||{}
+   setLead(detail)
+   setOpen(true)
+   setMessages(current=>[...current,{role:'assistant',content:`Thanks${detail.name?` ${detail.name}`:''} — I've received your enquiry${detail.vehicle&&detail.vehicle!=='General enquiry'?` about ${detail.vehicle}`:''}. I can help answer your questions here. What would you like to know?`}])
+  }
+  window.addEventListener('bhabireev:enquiry-submitted',onEnquiry)
+  return ()=>window.removeEventListener('bhabireev:enquiry-submitted',onEnquiry)
+ },[])
+ async function sendMessage(text=draft){
+  const clean=String(text||'').trim()
+  if(!clean||sending)return
+  const next=[...messages,{role:'user',content:clean}]
+  setMessages(next);setDraft('');setSending(true);setError('')
+  try{
+   if(!isConfigured) throw new Error('The AI assistant is not connected yet. Please use the enquiry form or contact our team while setup is completed.')
+   const context={businessName:settings?.business_name||'Bhabireev E-Mobility',location:settings?.location||'Sangli, Maharashtra, India',contactPhone:settings?.contact_phone||'9607799171',vehicles:(vehicles||[]).slice(0,25).map(v=>({brand:v.brand,model:v.model,year:v.year,price:v.price,condition:v.condition,odometer_km:v.odometer_km,battery_capacity:v.battery_capacity,claimed_range_km:v.claimed_range_km,colour:v.colour,status:v.status,description:v.description})),enquiry:lead?{name:lead.name,vehicle:lead.vehicle,message:lead.message}:null}
+   const {data,error:invokeError}=await supabase.functions.invoke('ev-chatbot',{body:{messages:next.slice(-10).map(m=>({role:m.role,content:m.content})),context}})
+   if(invokeError) throw invokeError
+   if(!data?.reply) throw new Error('The assistant did not return a reply. Please try again.')
+   setMessages(current=>[...current,{role:'assistant',content:data.reply}])
+  }catch(err){
+   setError(err.message||'The assistant is temporarily unavailable. Please try again or send an enquiry.')
+  }finally{setSending(false)}
+ }
+ const conversation=<div className="ev-chat-messages" aria-live="polite">{messages.map((message,index)=><div key={`${index}-${message.role}`} className={`ev-chat-message ${message.role==='user'?'from-customer':'from-assistant'}`}><span>{message.role==='assistant'?'Bhabireev AI':'You'}</span><p>{message.content}</p></div>)}{sending&&<div className="ev-chat-message from-assistant"><span>Bhabireev AI</span><p className="ev-chat-typing">Thinking…</p></div>}</div>
+ const composer=<form className="ev-chat-composer" onSubmit={e=>{e.preventDefault();sendMessage()}}><input aria-label="Ask the Bhabireev assistant" value={draft} onChange={e=>setDraft(e.target.value)} maxLength={1200} placeholder="Ask about a vehicle…" disabled={sending}/><button className="ev-chat-send" type="submit" aria-label="Send message" disabled={sending||!draft.trim()}><Send size={17}/></button></form>
+ return <>
+  <section className="ev-assistant-section" id="ai-assistant"><div className="ev-assistant-copy"><span className="eyebrow"><Sparkles size={15}/> PERSONAL EV BUYING ASSISTANT</span><h2>Questions about your next electric ride?</h2><p>Chat with the Bhabireev assistant about listed vehicles, pricing, range, battery details, and enquiries. Vehicle information is based on listings available on this website.</p><div className="ev-assistant-prompts"><button type="button" onClick={()=>sendMessage('Which electric vehicles are currently listed?')}>Available vehicles</button><button type="button" onClick={()=>sendMessage('Help me compare the listed vehicles.')}>Compare vehicles</button><button type="button" onClick={()=>sendMessage('What should I check before buying a pre-owned electric scooter?')}>Buying advice</button></div><p className="ev-assistant-note"><ShieldCheck size={14}/> The assistant should not invent prices, availability, or battery-health claims.</p></div><div className="ev-assistant-chat"><div className="ev-chat-header"><div className="ev-chat-avatar"><Sparkles size={19}/></div><div><strong>Bhabireev AI Assistant</strong><small><span className="ev-chat-online-dot"/> Website support</small></div><span className="ev-chat-header-tag">AI CHAT</span></div>{conversation}{error&&<div className="ev-chat-error" role="status">{error}</div>}{composer}<p className="ev-chat-disclaimer">Please don't share passwords, OTPs, or payment details.</p></div></section>
+  <div className="ev-chat-launcher-wrap">{open&&<section className="ev-chat-popover" aria-label="Bhabireev AI chat"><div className="ev-chat-header"><div className="ev-chat-avatar"><Sparkles size={19}/></div><div><strong>Bhabireev AI Assistant</strong><small><span className="ev-chat-online-dot"/> Ask us about electric vehicles</small></div><button type="button" className="ev-chat-close" onClick={()=>setOpen(false)} aria-label="Close chatbot"><X size={18}/></button></div>{conversation}{error&&<div className="ev-chat-error" role="status">{error}</div>}{composer}<p className="ev-chat-disclaimer">AI answers can be imperfect. Confirm details with our team.</p></section>}<button type="button" className="ev-chat-launcher" onClick={()=>setOpen(value=>!value)} aria-expanded={open} aria-label={open?'Close chat assistant':'Open chat assistant'}>{open?<X size={22}/>:<MessageSquare size={22}/>}<span>{open?'Close chat':'Chat with us'}</span></button></div>
+ </>
+}
+
 function Home({settings}) {
  const [vehicles,setVehicles]=useState([]),[loading,setLoading]=useState(true),[q,setQ]=useState(''),[kind,setKind]=useState('all'),[budget,setBudget]=useState('all'),[enquire,setEnquire]=useState(null),[error,setError]=useState('')
  useEffect(()=>{let alive=true;async function get(){if(!isConfigured){setVehicles(demoCards);setLoading(false);return}try{const {data,error}=await supabase.from('vehicles').select('*').eq('status','available').eq('published',true).order('created_at',{ascending:false});if(error)throw error;if(alive)setVehicles(data||[])}catch(e){if(alive)setError('We could not load listings. Please refresh or try again later.')}finally{if(alive)setLoading(false)}}get();return()=>{alive=false}},[])
@@ -347,7 +349,7 @@ function Home({settings}) {
  <section className="trust-strip"><div className="container trust-items"><span><BatteryCharging/> EV details that matter</span><span><ShieldCheck/> Transparency first</span><span><Heart/> Personal buying support</span><span><Bike/> Two-wheelers only</span></div></section>
  <section className="section container" id="inventory"><div className="section-heading"><div><span className="eyebrow">The collection</span><h2>Find your kind of electric.</h2><p>Browse available listings and compare the essentials before you enquire.</p></div><span className="listing-count">{loading?'Loading…':`${shown.length} available ${shown.length===1?'ride':'rides'}`}</span></div><div className="filter-bar"><div className="search-field"><Search size={18}/><input placeholder="Search brand or model" value={q} onChange={e=>setQ(e.target.value)}/></div><select aria-label="Vehicle type" value={kind} onChange={e=>setKind(e.target.value)}><option value="all">All two-wheelers</option><option value="scooter">Electric scooters</option><option value="bike">Electric bikes</option></select><select aria-label="Budget" value={budget} onChange={e=>setBudget(e.target.value)}><option value="all">Any budget</option><option value="50000">Up to ₹50,000</option><option value="75000">Up to ₹75,000</option><option value="100000">Up to ₹1,00,000</option><option value="150000">Up to ₹1,50,000</option></select><span className="filter-icon"><SlidersHorizontal size={17}/> Refine</span></div>{!isConfigured&&<div className="inline-alert">Preview mode: these example listings are illustrative. Connect Supabase and add real inventory in the owner dashboard before publishing.</div>}{error&&<div className="inline-alert">{error}</div>}{loading?<div className="loading-grid"><div/><div/><div/></div>:shown.length?<div className="vehicle-grid">{shown.map(v=><VehicleCard key={v.id} v={v} onEnquire={setEnquire}/>)}</div>:<div className="empty-state"><Bike size={30}/><h3>No matching rides just yet</h3><p>Try changing your search or budget.</p></div>}</section>
  <section className="why-section" id="why"><div className="container"><div className="section-heading"><div><span className="eyebrow">A more considered way to buy</span><h2>Good decisions start<br/>with better information.</h2></div><p className="why-intro">Used EVs deserve more than a price tag. We make space for the practical details buyers need to ask informed questions.</p></div><div className="benefit-grid"><article><div className="benefit-icon"><BatteryCharging/></div><h3>Battery-first thinking</h3><p>Battery capacity and claimed range are clearly shown when supplied. A battery health claim should only be made when supported by a real test or report.</p></article><article><div className="benefit-icon"><ClipboardList/></div><h3>Condition in context</h3><p>Vehicle descriptions can disclose service history, charger availability, visible damage, and known defects without hiding the details.</p></article><article><div className="benefit-icon"><ShieldCheck/></div><h3>Clear buyer communication</h3><p>Ask about a listing directly. Confirm documents, ownership, battery condition, and vehicle status before any payment.</p></article></div></div></section>
- <section className="contact-band container" id="contact"><div className="contact-copy"><span className="eyebrow">{settings?.contact_eyebrow||'Personal EV buying support'}</span><h2>{settings?.contact_title||'Find your next electric ride.'}</h2><p>{settings?.contact_description||'Questions about battery health, condition or a test ride? Talk directly to Bhabireev E-Mobility.'}</p><div className="contact-details"><a href={`tel:${settings?.contact_phone||'9607799171'}`}><span>{settings?.contact_phone_label||'CALL US'}</span><b>{settings?.contact_phone||'9607799171'}</b></a><a href={`https://wa.me/91${(settings?.whatsapp_number||'9607121117').replace(/\D/g,'').replace(/^91/,'')}`} target="_blank" rel="noreferrer"><span>{settings?.contact_whatsapp_label||'WHATSAPP'}</span><b>{settings?.whatsapp_number||'9607121117'}</b></a><a href={`mailto:${settings?.contact_email||'bhabireparshva5@gmail.com'}`}><span>{settings?.contact_email_label||'EMAIL'}</span><b>{settings?.contact_email||'bhabireparshva5@gmail.com'}</b></a></div></div><button className="button button-cream contact-cta" onClick={()=>setEnquire({brand:'',model:'',id:null,colour:''})}>{settings?.contact_cta_text||'Send an enquiry'} <ArrowRight size={17}/></button></section></main><Footer settings={settings}/>{enquire&&<EnquiryDialog vehicle={enquire} settings={settings} onClose={()=>setEnquire(null)}/>}</>
+ <EnquiryAssistant settings={settings} vehicles={shown}/><section className="contact-band container" id="contact"><div className="contact-copy"><span className="eyebrow">{settings?.contact_eyebrow||'Personal EV buying support'}</span><h2>{settings?.contact_title||'Find your next electric ride.'}</h2><p>{settings?.contact_description||'Questions about battery health, condition or a test ride? Talk directly to Bhabireev E-Mobility.'}</p><div className="contact-details"><a href={`tel:${settings?.contact_phone||'9607799171'}`}><span>{settings?.contact_phone_label||'CALL US'}</span><b>{settings?.contact_phone||'9607799171'}</b></a><a href={`https://wa.me/91${(settings?.whatsapp_number||'9607121117').replace(/\D/g,'').replace(/^91/,'')}`} target="_blank" rel="noreferrer"><span>{settings?.contact_whatsapp_label||'WHATSAPP'}</span><b>{settings?.whatsapp_number||'9607121117'}</b></a><a href={`mailto:${settings?.contact_email||'bhabireparshva5@gmail.com'}`}><span>{settings?.contact_email_label||'EMAIL'}</span><b>{settings?.contact_email||'bhabireparshva5@gmail.com'}</b></a></div></div><button className="button button-cream contact-cta" onClick={()=>setEnquire({brand:'',model:'',id:null,colour:''})}>{settings?.contact_cta_text||'Send an enquiry'} <ArrowRight size={17}/></button></section></main><Footer settings={settings}/>{enquire&&<EnquiryDialog vehicle={enquire} settings={settings} onClose={()=>setEnquire(null)}/>}</>
 }
 function Auth({onSession}) {
  const [email,setEmail]=useState(''),[password,setPassword]=useState(''),[busy,setBusy]=useState(false),[message,setMessage]=useState('')

@@ -1,0 +1,3 @@
+# Public website chat endpoint. Keep OPENAI_API_KEY only in Supabase Edge Function secrets.
+[functions.ev-chatbot]
+verify_jwt = false
